@@ -5,8 +5,9 @@ import requests
 from functools import wraps
 from flask_mysqldb import MySQL
 from passlib.hash import sha256_crypt
-import os
+import os,shutil
 from werkzeug.utils import secure_filename
+from pdf_gen import pdfgen
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -19,7 +20,7 @@ app.config['UPLOAD_EXTENSIONS'] = ['.pdf']
 app.config['UPLOAD_PATH'] = os.path.join('static','files')
 
 ##Database configuration
-app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_HOST'] = '0.0.0.0'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'project'
@@ -125,23 +126,52 @@ def register():
 
 
 @app.route('/home')
-#@is_logged_in
+@is_logged_in
 def home():
-    return render_template('home.html')
+    files=[]
+    curs = mysql.connection.cursor()
+    result = curs.execute("SELECT * FROM files WHERE userid=%s", [session['uid']])
+    if result > 0:
+        files=curs.fetchall()
+
+    return render_template('home.html',files=files)
 
 @app.route('/upload', methods = ['GET', 'POST'])
+@is_logged_in
 def upload_file():
     if request.method == 'POST':
         uploaded_file  = request.files['file']
         filename = secure_filename(uploaded_file.filename)
         if filename != '':
             file_ext = os.path.splitext(filename)[1]
-            path = os.path.join(app.config['UPLOAD_PATH'],'102')
+            path = os.path.join(app.config['UPLOAD_PATH'],str(session['uid']),)
             if not os.path.exists(path):
                 os.makedirs(path)
             if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                 abort(400)
-            uploaded_file.save(os.path.join(path, filename))
+            uploaded_file.save(os.path.join(path,'original' ,filename))
+
+            org_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'original')
+            gen_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'generated')
+            script_path = os.path.join(os.getcwd(), 'pdf_gen')
+
+            print(org_path)
+            print(script_path)
+            shutil.copy(os.path.join(org_path,filename), script_path)
+            #uploaded_file.save(os.path.join(script_path,filename))
+
+            os.chdir(script_path)
+            pdfgen.start(filename)
+            shutil.copy(filename,gen_path)
+            os.remove(filename)
+            os.chdir('..')
+            #print(gen_path)
+            curs = mysql.connection.cursor()
+            curs.execute(
+                "INSERT INTO files(userid, original_filepath,generated_filepath, filename) VALUES(%s, %s, %s,%s)",
+                (session['uid'],os.path.join(path,'original',filename),os.path.join(path,'generated',filename),filename))
+            mysql.connection.commit()
+            curs.close()
         flash('File Uploaded Sucessfully', 'success')
         return redirect(url_for('home'))
 
