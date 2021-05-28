@@ -19,9 +19,10 @@
     <!-- App CSS -->
     <link id="theme-style" rel="stylesheet" href= "{{ url_for('static',filename='assets/css/portal.css')}}">
 </head>
+
 <body class="app">
  {% include 'includes/_navbar.html' %}
- {% include 'includes/_flashmsg.html' %}
+
 {% block body %}  {% endblock %}
 {% include 'includes/_footer.html' %}
     <!-- Javascript -->

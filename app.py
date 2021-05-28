@@ -1,4 +1,4 @@
-from flask import Flask,request,session,url_for,redirect,flash
+from flask import Flask,request,session,url_for,redirect,flash,abort
 from flask.templating import render_template
 import json
 import requests
@@ -13,8 +13,10 @@ app.secret_key = os.urandom(24)
 mysql = MySQL()
 
 
-app.config['UPLOAD_FOLDER']='static/files'
-app.config['MAX_CONTENT_PATH']='10485760'
+#file upload config
+app.config['MAX_CONTENT_LENGTH'] = 10024 * 1024 #10mb
+app.config['UPLOAD_EXTENSIONS'] = ['.pdf']
+app.config['UPLOAD_PATH'] = os.path.join('static','files')
 
 ##Database configuration
 app.config['MYSQL_HOST'] = 'localhost'
@@ -130,9 +132,18 @@ def home():
 @app.route('/upload', methods = ['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        f = request.files['file']
-        f.save(secure_filename(f.filename))
-        return 'file uploaded successfully'
+        uploaded_file  = request.files['file']
+        filename = secure_filename(uploaded_file.filename)
+        if filename != '':
+            file_ext = os.path.splitext(filename)[1]
+            path = os.path.join(app.config['UPLOAD_PATH'],'102')
+            if not os.path.exists(path):
+                os.makedirs(path)
+            if file_ext not in app.config['UPLOAD_EXTENSIONS']:
+                abort(400)
+            uploaded_file.save(os.path.join(path, filename))
+        flash('File Uploaded Sucessfully', 'success')
+        return redirect(url_for('home'))
 
 if __name__ == '__main__':
     app.run()
