@@ -2,17 +2,63 @@
 
 {% extends 'includes/layout.html' %}
 {% block body %}
-    
+
+    <style>
+    .modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding-left:100px;
+    border: 1px solid #888;
+    width: 30%;
+    height:100px;
+}
+
+/* The Close Button */
+.close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+    </style>
+
     <div class="app-wrapper">
-	    
+
 	    <div class="app-content pt-3 p-md-3 p-lg-4">
+
 		    <div class="container-xl">
+
 			    <div class="row g-3 mb-4 align-items-center justify-content-between">
+
 				    <div class="col-auto">
+
 			            <h1 class="app-page-title mb-0">My Docs</h1>
 				    </div>
 				    <div class="col-auto">
 					     <div class="page-utilities">
+
 						    <div class="row g-2 justify-content-start justify-content-md-end align-items-center">
 							    <div class="col-auto">
 								    <form class="docs-search-form row gx-1 align-items-center">
@@ -23,10 +69,19 @@
 					                        <button type="submit" class="btn app-btn-secondary">Search</button>
 					                    </div>
 					                </form>
-					                
+
 							    </div><!--//col-->
+                                <div id="myModal" class="modal">
+                                     <div class="modal-content">
+                                    <span class="close">×</span>
+                                         <form action="upload" method="POST" enctype = "multipart/form-data">
+                        <input type="file" id="myFile" name="file">
+                             <input type="submit">
+    </form>
+                                     </div>
+                                    </div>
 							    <div class="col-auto">
-								    
+
 								    <select class="form-select w-auto">
 										  <option selected="" value="option-1">All</option>
 										  <option value="option-2">Text file</option>
@@ -38,7 +93,7 @@
 									</select>
 							    </div>
 							    <div class="col-auto">
-								    <a class="btn app-btn-primary" href="#"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-upload mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+								    <a id="myBtn" class="btn app-btn-primary"><svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-upload mr-2" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
   <path fill-rule="evenodd" d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
   <path fill-rule="evenodd" d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
 </svg>Upload File</a>
@@ -47,7 +102,7 @@
 					    </div><!--//table-utilities-->
 				    </div><!--//col-auto-->
 			    </div><!--//row-->
-			    
+
 			    <div class="row g-4">
 				    <div class="col-6 col-md-4 col-xl-3 col-xxl-2">
 					    <div class="app-card app-card-doc shadow-sm h-100">
@@ -682,6 +737,31 @@
 
 	    
     </div><!--//app-wrapper-->    					
+<script>
+    var modal = document.getElementById('myModal');
 
+// Get the button that opens the modal
+var btn = document.getElementById("myBtn");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks the button, open the modal
+btn.onclick = function() {
+    modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+    </script>
  
 {% endblock %}

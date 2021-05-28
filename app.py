@@ -6,14 +6,15 @@ from functools import wraps
 from flask_mysqldb import MySQL
 from passlib.hash import sha256_crypt
 import os
-
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 mysql = MySQL()
 
 
-
+app.config['UPLOAD_FOLDER']='static/files'
+app.config['MAX_CONTENT_PATH']='10485760'
 
 ##Database configuration
 app.config['MYSQL_HOST'] = 'localhost'
@@ -126,6 +127,12 @@ def register():
 def home():
     return render_template('home.html')
 
+@app.route('/upload', methods = ['GET', 'POST'])
+def upload_file():
+    if request.method == 'POST':
+        f = request.files['file']
+        f.save(secure_filename(f.filename))
+        return 'file uploaded successfully'
 
 if __name__ == '__main__':
     app.run()
