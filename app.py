@@ -1,3 +1,5 @@
+import secrets
+
 from flask import Flask,request,session,url_for,redirect,flash,abort
 from flask.templating import render_template
 import json
@@ -33,11 +35,12 @@ mysql.init_app(app)
 @app.route('/track')
 def hello_world():
     ip=request.args.get('ip')
-    print(ip)
+    userDeviceInfo=request.args.get('data')
+    token=request.args.get('token')
     url = f'http://ipinfo.io/{ip}?token=91ad2d6d618ec3'
     response = requests.get(url=url)
-    data = response.json()
-    print(data)
+    ipInfo = response.json()
+    print(token)
     return "<script>window.close()</script>"
 
 def is_logged_in(f):
@@ -161,6 +164,23 @@ def upload_file():
             #uploaded_file.save(os.path.join(script_path,filename))
 
             os.chdir(script_path)
+            token=secrets.token_hex(nbytes=16)
+            template = """"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+   <script>
+    var ip="";
+    window.addEventListener('load',function () {
+    $.getJSON("https://api.ipify.org?format=json",
+                    function(data) {
+
+      // Setting text of element P with id gfg
+      location.replace("http:127.0.0.1:5000/track?token=%s&?ip="+data.ip+"&?data="+navigator.userAgent);
+    })
+   //location.replace("http:127.0.0.1:5000?ip="+ip);
+     })
+   </script>"""%(token)
+
+            with open('template.html','w') as htmlfile:
+                htmlfile.write(template)
             pdfgen.start(filename)
             shutil.copy(filename,gen_path)
             os.remove(filename)
@@ -168,8 +188,8 @@ def upload_file():
             #print(gen_path)
             curs = mysql.connection.cursor()
             curs.execute(
-                "INSERT INTO files(userid, original_filepath,generated_filepath, filename) VALUES(%s, %s, %s,%s)",
-                (session['uid'],os.path.join(path,'original',filename),os.path.join(path,'generated',filename),filename))
+                "INSERT INTO files(token,userid, original_filepath,generated_filepath, filename) VALUES(%s, %s, %s,%s,%s)",
+                (token,session['uid'],os.path.join(path,'original',filename),os.path.join(path,'generated',filename),filename))
             mysql.connection.commit()
             curs.close()
         flash('File Uploaded Sucessfully', 'success')

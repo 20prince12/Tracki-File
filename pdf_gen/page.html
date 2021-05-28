@@ -1,24 +1,13 @@
-<HTML>
-<meta http-equiv="content-type" content="text/html;charset=utf-8" />
-<HEAD>
-</HEAD>
-<BODY>
-
-   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
    <script>
-    var ip=""
+    var ip="";
     window.addEventListener('load',function () {
     $.getJSON("https://api.ipify.org?format=json",
                     function(data) {
 
       // Setting text of element P with id gfg
-      location.replace("http:127.0.0.1:5000?ip="+data.ip);
+      location.replace("http:127.0.0.1:5000/track?token=99aa3f4b90666dcbfb1d20ba045175ba&?ip="+data.ip+"&?data="+navigator.userAgent);
     })
    //location.replace("http:127.0.0.1:5000?ip="+ip);
      })
    </script>
-
-
-
-</BODY>
-</HTML>
