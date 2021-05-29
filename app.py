@@ -64,6 +64,14 @@ def page_not_found(e):
 
 @app.route('/track')
 def hello_world():
+    city=""
+    host=""
+    country=""
+    state=""
+    city=""
+    postal=""
+    long,lat="",""
+    
     ip=request.args.get('ip')
 
     userDeviceInfo=request.args.get('data')
