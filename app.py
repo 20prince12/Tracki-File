@@ -297,5 +297,16 @@ def delete():
         curs.close()
         flash('File Deleted Sucessfully', 'success')
     return redirect(url_for('home'))
+
+@app.route('/out')
+def logout():
+    if 'uid' in session:
+        # Create cursor
+        session.clear()
+        flash('You are logged out', 'success')
+        return redirect(url_for('login'))
+    return redirect(url_for('login'))
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0',port=80)
