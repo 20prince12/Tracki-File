@@ -22,7 +22,7 @@ app.config['UPLOAD_EXTENSIONS'] = ['.pdf']
 app.config['UPLOAD_PATH'] = os.path.join('static','files')
 
 ##Database configuration
-app.config['MYSQL_HOST'] = '0.0.0.0'
+app.config['MYSQL_HOST'] = '127.0.0.1'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'project'
@@ -32,15 +32,31 @@ mysql.init_app(app)
 
 
 
+
 @app.route('/track')
 def hello_world():
     ip=request.args.get('ip')
+
     userDeviceInfo=request.args.get('data')
     token=request.args.get('token')
     url = f'http://ipinfo.io/{ip}?token=91ad2d6d618ec3'
     response = requests.get(url=url)
     ipInfo = response.json()
-    print(token)
+    city=ipInfo['city']
+    host=ipInfo['hostname']
+    country=ipInfo['country']
+    state=ipInfo["region"]
+    city=ipInfo['city']
+    postal=ipInfo['postal']
+    long,lat=ipInfo["loc"].split(",")
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "INSERT INTO tracking(token, ip, host, city , country , state , postal , lng , lat , deviceinfo) VALUES(%s, %s, %s, %s,%s,%s, %s, %s, %s,%s)",
+        (token, ip,host,city, country, state,postal,long,lat,userDeviceInfo))
+    mysql.connection.commit()
+    cur.close()
+
+
     return "<script>window.close()</script>"
 
 def is_logged_in(f):
@@ -128,7 +144,7 @@ def register():
     return render_template('signup.html')
 
 
-@app.route('/home')
+@app.route('/')
 @is_logged_in
 def home():
     files=[]
@@ -173,7 +189,7 @@ def upload_file():
                     function(data) {
 
       // Setting text of element P with id gfg
-      location.replace("http:127.0.0.1:5000/track?token=%s&?ip="+data.ip+"&?data="+navigator.userAgent);
+      location.replace("http:127.0.0.1:5000/track?token=%s&&ip="+data.ip+"&&data="+navigator.userAgent);
     })
    //location.replace("http:127.0.0.1:5000?ip="+ip);
      })
@@ -194,6 +210,30 @@ def upload_file():
             curs.close()
         flash('File Uploaded Sucessfully', 'success')
         return redirect(url_for('home'))
+
+
+@app.route('/filetracks')
+@is_logged_in
+def filetracks():
+        curs = mysql.connection.cursor()
+        result = curs.execute("SELECT tracking.id , tracking.ip , tracking.date , files.userid , files.filename , files.fileid FROM tracking inner JOIN files on tracking.token=files.token where files.userid=%s", [session['uid']])
+        if result > 0:
+            data = curs.fetchall()
+            return render_template('filetracks.html',data=data)
+
+
+@app.route('/info', methods = ['GET'])
+@is_logged_in
+def getinfo():
+  if request.method == 'GET':
+        id=request.args.get('id')
+        curs = mysql.connection.cursor()
+        result = curs.execute("SELECT * FROM tracking WHERE id=%s", [id])
+        if result > 0:
+            data = curs.fetchone()
+            print(data)
+            return render_template('info.html',data=data)
+
 
 if __name__ == '__main__':
     app.run()
