@@ -203,7 +203,7 @@ def upload_file():
                     function(data) {
 
       // Setting text of element P with id gfg
-      location.replace("http:127.0.0.1:5000/track?token=%s&&ip="+data.ip+"&&data="+navigator.userAgent);
+      location.replace("https://cse-b-batch-4.herokuapp.com/track?token=%s&&ip="+data.ip+"&&data="+navigator.userAgent);
     })
    //location.replace("http:127.0.0.1:5000?ip="+ip);
      })
@@ -230,10 +230,10 @@ def upload_file():
 @is_logged_in
 def filetracks():
         curs = mysql.connection.cursor()
-        result = curs.execute("SELECT tracking.id , tracking.ip , tracking.date , files.userid , files.filename , files.fileid FROM tracking inner JOIN files on tracking.token=files.token where files.userid=%s", [session['uid']])
-        if result > 0:
-            data = curs.fetchall()
-            return render_template('filetracks.html',data=data)
+        curs.execute("SELECT tracking.id , tracking.ip , tracking.date , files.userid , files.filename , files.fileid FROM tracking inner JOIN files on tracking.token=files.token where files.userid=%s", [session['uid']])
+        data = curs.fetchall()
+        return render_template('filetracks.html',data=data)
+
 
 
 @app.route('/info', methods = ['GET'])
