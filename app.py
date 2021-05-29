@@ -22,16 +22,31 @@ app.config['UPLOAD_EXTENSIONS'] = ['.pdf']
 app.config['UPLOAD_PATH'] = os.path.join('static','files')
 
 ##Database configuration
-app.config['MYSQL_HOST'] = '127.0.0.1'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] = ''
-app.config['MYSQL_DB'] = 'project'
+app.config['MYSQL_HOST'] = 'remotemysql.com'
+app.config['MYSQL_USER'] = 'bNU50Iwt2N'
+app.config['MYSQL_PASSWORD'] = 'SvZCqcSY45'
+app.config['MYSQL_DB'] = 'bNU50Iwt2N'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql.init_app(app)
 
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('404.html'), 404
 
 
+
+def dependencies():
+
+ os.system('command -v base64 > /dev/null 2>&1 || { echo >&2 "Install base64"; }')
+ os.system('command -v zip > /dev/null 2>&1 || { echo >&2 "Install zip"; }')
+ os.system('command -v netcat > /dev/null 2>&1 || { echo >&2 "Install netcat"; }')
+ os.system('command -v php > /dev/null 2>&1 || { echo >&2 "Install php"; }')
+ # os.system('command -v ssh > /dev/null 2>&1 || { echo >&2 "Install ssh"; }')
+ os.system('command -v i686-w64-mingw32-gcc > /dev/null 2>&1 || { echo >&2 "Install mingw-w64"; }')
+
+dependencies()
 
 @app.route('/track')
 def hello_world():
@@ -99,9 +114,6 @@ def login():
             password = data['password']
             uid = data['id']
             name = data['name']
-            print(password)
-            print(password_candidate)
-            print(sha256_crypt.verify(password_candidate, password))
             if sha256_crypt.verify(password_candidate, password):
                 session['logged_in'] = True
                 session['uid'] = uid
@@ -166,6 +178,8 @@ def upload_file():
             path = os.path.join(app.config['UPLOAD_PATH'],str(session['uid']),)
             if not os.path.exists(path):
                 os.makedirs(path)
+                os.makedirs(os.path.join(path,'original'))
+                os.makedirs(os.path.join(path, 'generated'))
             if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                 abort(400)
             uploaded_file.save(os.path.join(path,'original' ,filename))
@@ -231,9 +245,12 @@ def getinfo():
         result = curs.execute("SELECT * FROM tracking WHERE id=%s", [id])
         if result > 0:
             data = curs.fetchone()
-            print(data)
-            return render_template('info.html',data=data)
+            curs2 = mysql.connection.cursor()
+            curs2.execute("SELECT filename FROM files WHERE token=%s",[data['token']])
+            filename=curs2.fetchone()['filename']
+            print(filename)
+            return render_template('info.html',data=data,filename=filename)
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0',port=80)
