@@ -71,7 +71,7 @@ def hello_world():
     city=""
     postal=""
     long,lat="",""
-    
+
     ip=request.args.get('ip')
 
     userDeviceInfo=request.args.get('data')
@@ -79,13 +79,13 @@ def hello_world():
     url = f'http://ipinfo.io/{ip}?token=91ad2d6d618ec3'
     response = requests.get(url=url)
     ipInfo = response.json()
-    city=ipInfo['city']
-    host=ipInfo['hostname']
-    country=ipInfo['country']
-    state=ipInfo["region"]
-    city=ipInfo['city']
-    postal=ipInfo['postal']
-    long,lat=ipInfo["loc"].split(",")
+    city=ipInfo.get('city')
+    host=ipInfo.get('hostname')
+    country=ipInfo.get('country')
+    state=ipInfo.get("region")
+    city=ipInfo.get('city')
+    postal=ipInfo.get('postal')
+    long,lat=ipInfo.get("loc").split(",")
     cur = mysql.connection.cursor()
     time=datetime.now().strftime("%D  %H:%M:%S")
     cur.execute(
