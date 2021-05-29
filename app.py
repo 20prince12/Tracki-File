@@ -232,6 +232,7 @@ def filetracks():
         curs = mysql.connection.cursor()
         curs.execute("SELECT tracking.id , tracking.ip , tracking.date , files.userid , files.filename , files.fileid FROM tracking inner JOIN files on tracking.token=files.token where files.userid=%s", [session['uid']])
         data = curs.fetchall()
+        curs.close()
         return render_template('filetracks.html',data=data)
 
 
@@ -248,9 +249,25 @@ def getinfo():
             curs2 = mysql.connection.cursor()
             curs2.execute("SELECT filename FROM files WHERE token=%s",[data['token']])
             filename=curs2.fetchone()['filename']
-            print(filename)
+            curs.close()
             return render_template('info.html',data=data,filename=filename)
+  else:
+      return redirect(url_for('home'))
 
-
+@app.route('/delete',methods=['GET'])
+@is_logged_in
+def delete():
+    if request.method == 'GET':
+        filename=request.args.get('filename')
+        uid=session['uid']
+        os.remove(os.path.join(os.getcwd(),'static','files',str(uid),'generated',filename))
+        os.remove(os.path.join(os.getcwd(), 'static', 'files', str(uid), 'original', filename))
+        curs = mysql.connection.cursor()
+        curs = mysql.connection.cursor()
+        curs.execute("DELETE from files where filename=%s", [filename])
+        mysql.connection.commit()
+        curs.close()
+        flash('File Deleted Sucessfully', 'success')
+    return redirect(url_for('home'))
 if __name__ == '__main__':
     app.run(host='0.0.0.0',port=80)
