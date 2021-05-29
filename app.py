@@ -10,6 +10,8 @@ from passlib.hash import sha256_crypt
 import os,shutil
 from werkzeug.utils import secure_filename
 from pdf_gen import pdfgen
+from flask_mail import Mail, Message
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -28,12 +30,18 @@ app.config['MYSQL_PASSWORD'] = 'SvZCqcSY45'
 app.config['MYSQL_DB'] = 'bNU50Iwt2N'
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
+#Mail server configuration
+app.config['MAIL_SERVER']='smtp.gmail.com'
+app.config['MAIL_PORT'] = '587'
+app.config['MAIL_USERNAME'] = 'projecthandbloom@gmail.com'
+app.config['MAIL_PASSWORD'] = 'ijjhrmkifnrtjfwq'
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+
+
+mail = Mail(app)
 mysql.init_app(app)
 
-@app.errorhandler(404)
-def page_not_found(e):
-    # note that we set the 404 status explicitly
-    return render_template('404.html'), 404
 
 
 
@@ -47,6 +55,12 @@ def dependencies():
  os.system('command -v i686-w64-mingw32-gcc > /dev/null 2>&1 || { echo >&2 "Install mingw-w64"; }')
 
 dependencies()
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    # note that we set the 404 status explicitly
+    return render_template('404.html'), 404
 
 @app.route('/track')
 def hello_world():
@@ -65,13 +79,27 @@ def hello_world():
     postal=ipInfo['postal']
     long,lat=ipInfo["loc"].split(",")
     cur = mysql.connection.cursor()
+    time=datetime.now().strftime("%D  %H:%M:%S")
     cur.execute(
         "INSERT INTO tracking(token, ip, host, city , country , state , postal , lng , lat , deviceinfo) VALUES(%s, %s, %s, %s,%s,%s, %s, %s, %s,%s)",
         (token, ip,host,city, country, state,postal,long,lat,userDeviceInfo))
     mysql.connection.commit()
     cur.close()
-
-
+    cur2=mysql.connection.cursor()
+    cur2.execute("SELECT email,name From users where id=(select userid from files where token=%s)",[token])
+    d=cur2.fetchone()
+    cur2.close()
+    cur3=mysql.connection.cursor()
+    cur3.execute("SELECT filename from files where token=%s",[token])
+    e=cur3.fetchone()
+    cur3.close()
+    filename=e['filename']
+    email=d['email']
+    name=d['name']
+    print(filename,email,name)
+    msg = Message(f"Your file {filename} was accessed", sender='projecthandbloom@gmail.com', recipients=[email])
+    msg.body =f"Hello {name} , your file {e['filename']} was accessed by {ip} on {time} for more details visit https://cse-b-batch-4.herokuapp.com/filetracks"
+    mail.send(msg)
     return "<script>window.close()</script>"
 
 def is_logged_in(f):
