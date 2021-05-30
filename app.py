@@ -104,10 +104,11 @@ def hello_world():
     filename=e['filename']
     email=d['email']
     name=d['name']
-    print(filename,email,name)
-    msg = Message(f"Your file {filename} was accessed", sender='projecthandbloom@gmail.com', recipients=[email])
-    msg.body =f"Hello {name} , your file {e['filename']} was accessed by {ip} on {time} for more details visit https://cse-b-batch-4.herokuapp.com/filetracks"
-    mail.send(msg)
+    notification=d['notification']
+    if notification:
+        msg = Message(f"Your file {filename} was accessed", sender='projecthandbloom@gmail.com', recipients=[email])
+        msg.body =f"Hello {name} , your file {e['filename']} was accessed by {ip} on {time} for more details visit https://cse-b-batch-4.herokuapp.com/filetracks"
+        mail.send(msg)
     return "<script>window.close()</script>"
 
 def is_logged_in(f):
@@ -154,6 +155,7 @@ def login():
                 session['logged_in'] = True
                 session['uid'] = uid
                 session['s_name'] = name
+                session['email'] = data['email']
                 return redirect(url_for('home'))
             else:
                 flash('Incorrect password', 'danger')
@@ -307,6 +309,7 @@ def delete():
     return redirect(url_for('home'))
 
 @app.route('/out')
+@is_logged_in
 def logout():
     if 'uid' in session:
         # Create cursor
@@ -314,6 +317,34 @@ def logout():
         flash('You are logged out', 'success')
         return redirect(url_for('login'))
     return redirect(url_for('login'))
+
+@app.route('/settings',methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        cur = mysql.connection.cursor()
+        name = request.form.get('name')
+        email = request.form.get('email')
+        notification=0
+        if request.form.get('notification')=='on':
+            notification=1
+        uid=session['uid']
+        sql = f"SELECT * FROM users WHERE email='{email}' and id<>{uid}"
+        result = cur.execute(sql)
+        if result>0:
+            flash("email already exist",'danger')
+            return redirect(url_for('settings'))
+        else:
+            cur2=mysql.connection.cursor()
+            password = sha256_crypt.encrypt(request.form.get('password'))
+            sql = f"UPDATE users SET name='{name}' , email='{email}',password='{password}',notification={notification} WHERE id={uid}"
+            cur2.execute(sql)
+            mysql.connection.commit()
+            cur2.close()
+            flash("Update Success",'success')
+            return redirect(url_for('settings'))
+
+        return render_template('settings.html')
+    return render_template('settings.html')
 
 
 if __name__ == '__main__':
