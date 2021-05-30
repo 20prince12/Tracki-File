@@ -94,7 +94,7 @@ def hello_world():
     mysql.connection.commit()
     cur.close()
     cur2=mysql.connection.cursor()
-    cur2.execute("SELECT email,name From users where id=(select userid from files where token=%s)",[token])
+    cur2.execute("SELECT email,name,notification From users where id=(select userid from files where token=%s)",[token])
     d=cur2.fetchone()
     cur2.close()
     cur3=mysql.connection.cursor()
