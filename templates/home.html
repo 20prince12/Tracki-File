@@ -78,7 +78,7 @@
                                     <span class="close">×</span>
                                          <form action="upload" method="POST" enctype = "multipart/form-data">
                         <input type="file" id="myFile" name="file">
-                             <input type="submit" value="Upload">
+                             <input type="submit" value="Upload" required>
     </form>
                                      </div>
                                     </div>
@@ -125,7 +125,7 @@
 							    <div class="app-doc-meta">
 								    <ul class="list-unstyled mb-0">
 									    <li><span class="text-muted">Type:</span> PDF</li>
-									    <li><span class="text-muted">Size:</span> {{ file.filesize }}MB</li>
+									    <li><span class="text-muted">Size:</span> {{ file.filesize }} Bytes</li>
 
 								    </ul>
 							    </div><!--//app-doc-meta-->

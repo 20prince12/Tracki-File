@@ -26,6 +26,8 @@ def addToken(file,token):
 
 def zipallFiles(source_file,destination):
     os.chdir(destination)
+    if os.path.exists("generated.zip"):
+        os.remove("generated.zip")
     shutil.make_archive("generated","zip",source_file)
 
 def unzipFiles(source,destionation):

@@ -230,7 +230,6 @@ def upload_file():
                 flash('File not supported', 'Danger')
                 return redirect(url_for('/'))
             uploaded_file.save(os.path.join(path,'original' ,filename))
-            size=uploaded_file.content_length
             org_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'original')
             gen_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'generated')
             token = secrets.token_hex(nbytes=16)
@@ -238,8 +237,8 @@ def upload_file():
             if file_ext=='pdf':
                 script_path = os.path.join(os.getcwd(), 'pdf_gen')
 
-                print(org_path)
-                print(script_path)
+                #print(org_path)
+                #print(script_path)
                 shutil.copy(os.path.join(org_path,filename), script_path)
                 #uploaded_file.save(os.path.join(script_path,filename))
 
@@ -269,7 +268,14 @@ def upload_file():
                 #generating file
                 word_path=os.path.join(org_path,filename)
                 os.chdir('wordgen')
+
                 docxGen.wordgen(token,word_path)
+
+                if os.path.exists(os.path.join(gen_path,filename)):
+                    os.remove(os.path.join(gen_path,filename))
+                if os.path.exists(filename):
+                    os.remove(filename)
+
                 os.rename('generated.zip',filename)
                 shutil.move(filename,gen_path)
                 os.chdir("..")
@@ -281,6 +287,7 @@ def upload_file():
                 flash('File not supported', 'danger')
                 return redirect(url_for('/'))
             #print(gen_path)
+            size=os.stat(os.path.join(path,'generated',filename)).st_size
             curs = mysql.connection.cursor()
             curs.execute(
                 "INSERT INTO files(token,userid, original_filepath,generated_filepath, filename , filesize) VALUES(%s, %s, %s,%s,%s,%s)",
