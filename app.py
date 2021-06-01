@@ -230,7 +230,7 @@ def upload_file():
                 flash('File not supported', 'Danger')
                 return redirect(url_for('/'))
             uploaded_file.save(os.path.join(path,'original' ,filename))
-
+            size=uploaded_file.content_length
             org_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'original')
             gen_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'generated')
             token = secrets.token_hex(nbytes=16)
@@ -283,8 +283,8 @@ def upload_file():
             #print(gen_path)
             curs = mysql.connection.cursor()
             curs.execute(
-                "INSERT INTO files(token,userid, original_filepath,generated_filepath, filename) VALUES(%s, %s, %s,%s,%s)",
-                (token,session['uid'],os.path.join(path,'original',filename),os.path.join(path,'generated',filename),filename))
+                "INSERT INTO files(token,userid, original_filepath,generated_filepath, filename , filesize) VALUES(%s, %s, %s,%s,%s,%s)",
+                (token,session['uid'],os.path.join(path,'original',filename),os.path.join(path,'generated',filename),filename,size))
             mysql.connection.commit()
             curs.close()
         flash('File Uploaded Sucessfully', 'success')
