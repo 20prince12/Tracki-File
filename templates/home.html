@@ -111,7 +111,11 @@
 					    <div class="app-card app-card-doc shadow-sm h-100">
 						    <div class="app-card-thumb-holder p-3">
 							    <span class="icon-holder">
+                                    {%  if file.ext == "pdf" %}
 	                                <i class="fas fa-file-pdf pdf-file"></i>
+                                    {%  elif file.ext == "docx" %}
+                                   <i class="fas fa-file-alt text-file"></i>
+                                    {% endif %}
 	                            </span>
 	                             <a class="app-card-link-mask" href="#file-link"></a>
 						    </div>
