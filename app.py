@@ -82,7 +82,6 @@ def hello_world():
         ip = request.headers.getlist("X-Forwarded-For")[0]
     #userDeviceInfo=request.args.get('data')
     userDeviceInfo=str(request.headers.get('User-Agent'))
-
     token=request.args.get('token')
     url = f'http://ipinfo.io/{ip}?token=91ad2d6d618ec3'
     response = requests.get(url=url)
