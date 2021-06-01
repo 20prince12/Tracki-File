@@ -73,7 +73,6 @@ def hello_world():
     long,lat="",""
 
     ip=request.args.get('ip')
-    print(request.remote_addr)
     userDeviceInfo=request.args.get('data')
     token=request.args.get('token')
     url = f'http://ipinfo.io/{ip}?token=91ad2d6d618ec3'
