@@ -1,4 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="https://aa7c3a42e784.ngrok.io/track?token=8f378c668b664c9e1d6903aef9cf5a53" TargetMode="External" />
-</Relationships>
