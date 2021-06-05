@@ -270,7 +270,7 @@ def upload_file():
                         function(data) {
     
           // Setting text of element P with id gfg
-          location.replace("https://tracki-file.azurewebsites.net/track?token=%s&&ip="+data.ip);
+          location.replace("https://cse-b-batch-4.herokuapp.com/track?token=%s&&ip="+data.ip);
         })
          })
        </script>"""%(token)
