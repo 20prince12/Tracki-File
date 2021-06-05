@@ -1,6 +1,6 @@
 import secrets
-
-from flask import Flask,request,session,url_for,redirect,flash,abort,send_file
+import time
+from flask import Flask,request,session,url_for,redirect,flash,abort,send_file,time
 from flask.templating import render_template
 import requests
 from functools import wraps
@@ -256,11 +256,12 @@ def upload_file():
             generated_file_name = "___".join([uid, 'generated',filename])
             size = os.stat(filename).st_size
             upload_file_azure(original_file_name,filename)
+            flag=0
             if file_ext=='pdf':
                 script_path = 'pdf_gen'
                 shutil.move(filename, script_path)
                 os.chdir(script_path)
-
+                flag=1
                 template = """"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
        <script>
         var ip="";
@@ -277,22 +278,25 @@ def upload_file():
                 with open('template.html','w') as htmlfile:
                     htmlfile.write(template)
                 pdfgen.start(filename)
+                time.sleep(1)
                 os.remove(filename+".zip")
                 upload_file_azure(generated_file_name, filename)
                 os.remove(filename)
-                os.chdir('..')
+
 
             elif file_ext=='docx':
                 #generating file
                 shutil.move(filename, 'wordgen')
                 os.chdir('wordgen')
+                flag=1
                 docxGen.wordgen(token,filename)
                 os.rename('generated.zip',filename)
                 upload_file_azure(generated_file_name, filename)
                 os.remove(filename)
+
+
+            if flag:
                 os.chdir("..")
-
-
 
 
 
