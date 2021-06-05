@@ -59,4 +59,4 @@ jobs:
         with:
           app-name: 'tracki-file'
           slot-name: 'production'
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile_b25912bbb0b0496c9f1949bb8f77421b }}
+          publish-profile: ${{ secrets.AzureAppService_PublishProfile_c20e70392ec84f798f833ecc1bc6579e }}
