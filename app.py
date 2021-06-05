@@ -1,6 +1,6 @@
 import secrets
 import time
-from flask import Flask,request,session,url_for,redirect,flash,abort,send_file,time
+from flask import Flask,request,session,url_for,redirect,flash,abort,send_file
 from flask.templating import render_template
 import requests
 from functools import wraps
