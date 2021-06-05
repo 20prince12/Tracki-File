@@ -297,6 +297,7 @@ def upload_file():
 
             if flag:
                 os.chdir("..")
+                flag=0
 
 
 
