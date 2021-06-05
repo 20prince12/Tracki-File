@@ -1,8 +1,7 @@
 import secrets
-
-from flask import Flask,request,session,url_for,redirect,flash,abort
+import time
+from flask import Flask,request,session,url_for,redirect,flash,abort,send_file
 from flask.templating import render_template
-import json
 import requests
 from functools import wraps
 from flask_mysqldb import MySQL
@@ -13,6 +12,7 @@ from pdf_gen import pdfgen
 from wordgen import docxGen
 from flask_mail import Mail, Message
 from datetime import datetime
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, __version__
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -25,19 +25,22 @@ app.config['UPLOAD_EXTENSIONS'] = ['.pdf','.docx']
 app.config['UPLOAD_PATH'] = os.path.join('static','files')
 
 ##Database configuration
-app.config['MYSQL_HOST'] = 'remotemysql.com'
-app.config['MYSQL_USER'] = 'bNU50Iwt2N'
-app.config['MYSQL_PASSWORD'] = 'SvZCqcSY45'
-app.config['MYSQL_DB'] = 'bNU50Iwt2N'
+app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
+app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER')
+app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
+app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB')
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 #Mail server configuration
 app.config['MAIL_SERVER']='smtp.gmail.com'
 app.config['MAIL_PORT'] = '587'
-app.config['MAIL_USERNAME'] = 'projecthandbloom@gmail.com'
-app.config['MAIL_PASSWORD'] = 'ijjhrmkifnrtjfwq'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
+
+
+
 
 
 mail = Mail(app)
@@ -64,8 +67,27 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 
+def upload_file_azure(file_name,file_path):
+    connect_str = os.environ.get('storage_key')
+    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+    container_name = 'userfiles'
+    blob_client = blob_service_client.get_blob_client(container=container_name, blob=file_name)
+    with open(file_path, "rb") as data:
+        blob_client.upload_blob(data)
 
 
+
+def delete_file_azure(file_name):
+    connect_str = os.environ.get('storage_key')
+    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+    container_name = 'userfiles'
+    container_client = blob_service_client.get_container_client(container_name)
+    print(file_name)
+    blob_client = container_client.get_blob_client("___".join([str(session['uid']),'original',file_name]))
+    blob_client.delete_blob()
+    blob_client = container_client.get_blob_client("___".join([str(session['uid']),'generated',file_name]))
+    blob_client.delete_blob()
+    return redirect(url_for('home'))
 
 @app.route('/track')
 def hello_world():
@@ -114,7 +136,7 @@ def hello_world():
     notification=d['notification']
     if notification:
         msg = Message(f"Your file {filename} was accessed", sender='projecthandbloom@gmail.com', recipients=[email])
-        msg.body =f"Hello {name} , your file {e['filename']} was accessed by {ip} on {time} for more details visit https://cse-b-batch-4.herokuapp.com/filetracks"
+        msg.body =f"Hello {name} , your file {e['filename']} was accessed by {ip} on {time} for more details visit https://tracki-file.azurewebsites.net"
         mail.send(msg)
     return "<script>window.close()</script>"
 
@@ -221,29 +243,25 @@ def upload_file():
         filename = secure_filename(uploaded_file.filename)
         if filename != '':
             file_ext = os.path.splitext(filename)[1]
-            path = os.path.join(app.config['UPLOAD_PATH'],str(session['uid']),)
-            if not os.path.exists(path):
-                os.makedirs(path)
-                os.makedirs(os.path.join(path,'original'))
-                os.makedirs(os.path.join(path, 'generated'))
+            path = os.path.join(app.config['UPLOAD_PATH'])
             if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                 flash('File not supported', 'Danger')
                 return redirect(url_for('/'))
-            uploaded_file.save(os.path.join(path,'original' ,filename))
-            org_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'original')
-            gen_path = os.path.join(os.getcwd(),'static','files',str(session['uid']),'generated')
+            #file_path = os.path.join(os.getcwd(),path, filename)
+            uploaded_file.save(filename)
             token = secrets.token_hex(nbytes=16)
             file_ext=filename.split(".")[1]
+            uid=str(session['uid'])
+            original_file_name="___".join([uid,'original',filename])
+            generated_file_name = "___".join([uid, 'generated',filename])
+            size = os.stat(filename).st_size
+            upload_file_azure(original_file_name,filename)
+            flag=0
             if file_ext=='pdf':
-                script_path = os.path.join(os.getcwd(), 'pdf_gen')
-
-                #print(org_path)
-                #print(script_path)
-                shutil.copy(os.path.join(org_path,filename), script_path)
-                #uploaded_file.save(os.path.join(script_path,filename))
-
+                script_path = 'pdf_gen'
+                shutil.move(filename, script_path)
                 os.chdir(script_path)
-
+                flag=1
                 template = """"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
        <script>
         var ip="";
@@ -252,7 +270,7 @@ def upload_file():
                         function(data) {
     
           // Setting text of element P with id gfg
-          location.replace("https://cse-b-batch-4.herokuapp.com/track?token=%s&&ip="+data.ip);
+          location.replace("https://tracki-file.azurewebsites.net/track?token=%s&&ip="+data.ip);
         })
          })
        </script>"""%(token)
@@ -260,44 +278,62 @@ def upload_file():
                 with open('template.html','w') as htmlfile:
                     htmlfile.write(template)
                 pdfgen.start(filename)
-                shutil.copy(filename,gen_path)
+                time.sleep(1)
+                os.remove(filename+".zip")
+                upload_file_azure(generated_file_name, filename)
                 os.remove(filename)
-                os.chdir('..')
+
+
             elif file_ext=='docx':
-
                 #generating file
-                word_path=os.path.join(org_path,filename)
+                shutil.move(filename, 'wordgen')
                 os.chdir('wordgen')
-
-                docxGen.wordgen(token,word_path)
-
-                if os.path.exists(os.path.join(gen_path,filename)):
-                    os.remove(os.path.join(gen_path,filename))
-                if os.path.exists(filename):
-                    os.remove(filename)
-
+                flag=1
+                docxGen.wordgen(token,filename)
                 os.rename('generated.zip',filename)
-                shutil.move(filename,gen_path)
-                os.chdir("..")
+                upload_file_azure(generated_file_name, filename)
+                os.remove(filename)
 
-                #updating database
+
+            if flag:
+                os.chdir("..")
+                flag=0
+
 
 
             else:
                 flash('File not supported', 'danger')
                 return redirect(url_for('/'))
-            #print(gen_path)
-            size=os.stat(os.path.join(path,'generated',filename)).st_size
+
+            # updating database
             curs = mysql.connection.cursor()
             curs.execute(
-                "INSERT INTO files(token,userid, original_filepath,generated_filepath, filename , filesize) VALUES(%s, %s, %s,%s,%s,%s)",
-                (token,session['uid'],os.path.join(path,'original',filename),os.path.join(path,'generated',filename),filename,size))
+                "INSERT INTO files(token,userid,filename,filesize) VALUES(%s, %s, %s,%s)",
+                (token,uid,filename,size))
             mysql.connection.commit()
             curs.close()
         flash('File Uploaded Sucessfully', 'success')
         return redirect(url_for('home'))
 
-
+@app.route('/download', methods=['GET', 'POST'])
+@is_logged_in
+def download():
+    if request.method == 'GET':
+        filename = request.args.get('filename')
+        tempname = filename.split("___")[2]
+        if filename.split("___")[0]==str(session['uid']):
+            if os.path.isdir('file'):
+                shutil.rmtree('file')
+            os.mkdir('file')
+            connect_str = os.environ.get('storage_key')
+            blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+            container_name='userfiles'
+            blob_client = blob_service_client.get_blob_client(container=container_name, blob=filename)
+            with open('file/'+tempname, "wb") as download_file:
+                download_file.write(blob_client.download_blob().readall())
+            return send_file('file/'+tempname,attachment_filename=tempname,as_attachment=True)
+    flash("Something went wrong",'danger')
+    return render_template('home.html')
 @app.route('/filetracks')
 @is_logged_in
 def filetracks():
@@ -332,8 +368,7 @@ def delete():
     if request.method == 'GET':
         filename=request.args.get('filename')
         uid=session['uid']
-        os.remove(os.path.join(os.getcwd(),'static','files',str(uid),'generated',filename))
-        os.remove(os.path.join(os.getcwd(), 'static', 'files', str(uid), 'original', filename))
+        delete_file_azure(filename)
         curs = mysql.connection.cursor()
         curs = mysql.connection.cursor()
         curs.execute("DELETE from files where filename=%s", [filename])
@@ -382,4 +417,4 @@ def settings():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=80)
+    app.run(host='0.0.0.0',port=5000)
