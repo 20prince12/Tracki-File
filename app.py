@@ -247,18 +247,18 @@ def upload_file():
             if file_ext not in app.config['UPLOAD_EXTENSIONS']:
                 flash('File not supported', 'Danger')
                 return redirect(url_for('/'))
-            file_path = os.path.join(os.getcwd(),path, filename)
-            uploaded_file.save(file_path)
+            #file_path = os.path.join(os.getcwd(),path, filename)
+            uploaded_file.save(filename)
             token = secrets.token_hex(nbytes=16)
             file_ext=filename.split(".")[1]
             uid=str(session['uid'])
             original_file_name="___".join([uid,'original',filename])
             generated_file_name = "___".join([uid, 'generated',filename])
-            size = os.stat(file_path).st_size
-            upload_file_azure(original_file_name,file_path)
+            size = os.stat(filename).st_size
+            upload_file_azure(original_file_name,filename)
             if file_ext=='pdf':
                 script_path = os.path.join(os.getcwd(), 'pdf_gen')
-                shutil.copy(file_path, script_path)
+                shutil.copy(filename, script_path)
                 os.chdir(script_path)
 
                 template = """"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
@@ -278,20 +278,21 @@ def upload_file():
                     htmlfile.write(template)
                 pdfgen.start(filename)
                 os.remove(filename+".zip")
-                shutil.move(filename,file_path)
+                upload_file_azure(generated_file_name, filename)
+                os.remove(filename)
                 os.chdir('..')
-                upload_file_azure(generated_file_name, file_path)
-                os.remove(file_path)
+
             elif file_ext=='docx':
                 #generating file
                 os.chdir('wordgen')
-                docxGen.wordgen(token,file_path)
+                docxGen.wordgen(token,filename)
 
                 os.rename('generated.zip',filename)
-                shutil.move(filename,file_path)
+                upload_file_azure(generated_file_name, filename)
+                os.remove(filename)
                 os.chdir("..")
-                upload_file_azure(generated_file_name,file_path)
-                os.remove(file_path)
+
+
 
 
 
