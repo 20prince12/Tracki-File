@@ -257,8 +257,8 @@ def upload_file():
             size = os.stat(filename).st_size
             upload_file_azure(original_file_name,filename)
             if file_ext=='pdf':
-                script_path = os.path.join(os.getcwd(), 'pdf_gen')
-                shutil.copy(filename, script_path)
+                script_path = 'pdf_gen'
+                shutil.move(filename, script_path)
                 os.chdir(script_path)
 
                 template = """"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
@@ -284,9 +284,9 @@ def upload_file():
 
             elif file_ext=='docx':
                 #generating file
+                shutil.move(filename, 'wordgen')
                 os.chdir('wordgen')
                 docxGen.wordgen(token,filename)
-
                 os.rename('generated.zip',filename)
                 upload_file_azure(generated_file_name, filename)
                 os.remove(filename)
