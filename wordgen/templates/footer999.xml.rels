@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="https://tracki-file.azurewebsites.net/track?token=6fa61e9dabe3b59ecaf5b94cd1f3f07a" TargetMode="External" />
+</Relationships>

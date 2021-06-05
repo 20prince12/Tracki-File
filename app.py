@@ -83,9 +83,9 @@ def delete_file_azure(file_name):
     container_name = 'userfiles'
     container_client = blob_service_client.get_container_client(container_name)
     print(file_name)
-    blob_client = container_client.get_blob_client("_".join([str(session['uid']),'original',file_name]))
+    blob_client = container_client.get_blob_client("___".join([str(session['uid']),'original',file_name]))
     blob_client.delete_blob()
-    blob_client = container_client.get_blob_client("_".join([str(session['uid']),'generated',file_name]))
+    blob_client = container_client.get_blob_client("___".join([str(session['uid']),'generated',file_name]))
     blob_client.delete_blob()
     return redirect(url_for('home'))
 
@@ -252,8 +252,8 @@ def upload_file():
             token = secrets.token_hex(nbytes=16)
             file_ext=filename.split(".")[1]
             uid=str(session['uid'])
-            original_file_name="_".join([uid,'original',filename])
-            generated_file_name = "_".join([uid, 'generated',filename])
+            original_file_name="___".join([uid,'original',filename])
+            generated_file_name = "___".join([uid, 'generated',filename])
             size = os.stat(file_path).st_size
             upload_file_azure(original_file_name,file_path)
             if file_ext=='pdf':
@@ -277,6 +277,7 @@ def upload_file():
                 with open('template.html','w') as htmlfile:
                     htmlfile.write(template)
                 pdfgen.start(filename)
+                os.remove(filename+".zip")
                 shutil.move(filename,file_path)
                 os.chdir('..')
                 upload_file_azure(generated_file_name, file_path)
@@ -313,8 +314,8 @@ def upload_file():
 def download():
     if request.method == 'GET':
         filename = request.args.get('filename')
-        tempname = filename.split("_")[2]
-        if filename.split("_")[0]==str(session['uid']):
+        tempname = filename.split("___")[2]
+        if filename.split("___")[0]==str(session['uid']):
             if os.path.isdir('file'):
                 shutil.rmtree('file')
             os.mkdir('file')
@@ -410,4 +411,4 @@ def settings():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=80)
+    app.run(host='0.0.0.0',port=5000)
