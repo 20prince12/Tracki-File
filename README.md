@@ -8,7 +8,7 @@ track your files ANYWHERE ANYTIME easily by simply uploading and downloading the
 
 <h2> :arrow_forward: Supported File Types :</h2>
 
-:small_blue_diamond: <b>~~PDF</b>(~~supports only in Adobe acrobat software)~~ [<b  style="color:red">currently broken</b>]<br>
+:small_blue_diamond: <b>~~PDF~~</b>(~~supports only in Adobe acrobat software)~~ [<b  style="color:red">currently broken</b>]<br>
 :small_blue_diamond: <b>DOCX</b>(supports only in Mobile/Windows MS Office 365/MS Word)
 
 
