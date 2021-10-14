@@ -12,8 +12,8 @@ Supported File Types :
 
 
 <h2> :arrow_forward: Usage : </h2> 
-:one: <b>Register</b>
-:two: <b>Login</b>
-:three: <b>Upload</b>
-:four: <b>Download</b>
-:five: <b>View Tracking info!</b>
+:one: <b>Register</b><br>
+:two: <b>Login</b><br>
+:three: <b>Upload</b><br>
+:four: <b>Download</b><br>
+:five: <b>View Tracking info!</b><br>
