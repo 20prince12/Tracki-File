@@ -10,7 +10,7 @@
             <w:fldChar w:fldCharType="begin" />
         </w:r>
         <w:r>
-            <w:instrText xml:space="preserve"> INCLUDEPICTURE  "https://cse-b-batch-4.herokuapp.com/track?token=pqrsxyzw" \d  \* MERGEFORMAT </w:instrText>
+            <w:instrText xml:space="preserve"> INCLUDEPICTURE  "https://tracki-file.herokuapp.com/track?token=pqrsxyzw" \d  \* MERGEFORMAT </w:instrText>
         </w:r>
         <w:r>
             <w:fldChar w:fldCharType="separate" />
